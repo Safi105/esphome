@@ -51,4 +51,4 @@ class Vaillantx6Sensor : public PollingComponent, public UARTDevice {
   void update() override;
 };
 
-#endif  // VAILLANTX6SENSOR_H
+#endif  // VAILLANTX6_H
