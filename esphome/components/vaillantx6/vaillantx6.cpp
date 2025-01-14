@@ -1,7 +1,7 @@
 #include "vaillantx6.h"
 
 void logCmd(const char *tag, byte *cmd) {
-  ESP_LOGD("Vaillantx6", "%s: 0x%.2x 0x%.2x 0x%.2x 0x%.2x 0x%.2x 0x%.2x 0x%.2x", tag, cmd[0], cmd[1], cmd[2], cmd[3], cmd[4], cmd[5], cmd[6]);
+  ESP_LOGD("vaillantx6", "%s: 0x%.2x 0x%.2x 0x%.2x 0x%.2x 0x%.2x 0x%.2x 0x%.2x", tag, cmd[0], cmd[1], cmd[2], cmd[3], cmd[4], cmd[5], cmd[6]);
 }
 
 uint8_t VaillantReturnTypeLength(VaillantReturnTypes t) {
