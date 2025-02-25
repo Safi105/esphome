@@ -1,4 +1,69 @@
+#include "esphome/core/log.h"
 #include "vaillantx6.h"
+
+namespace esphome {
+namespace vaillant6 {
+
+static const char *TAG = "vaillantx6.sensor";
+
+void Vaillantx6::setup() {
+
+}
+
+void Vaillantx6::update() {
+
+  byte *cmdPacket = (byte *)malloc(sizeof(byte) * CMD_LENGTH);
+  byte *answerBuff = (byte *)malloc(sizeof(byte) * ANSWER_LENGTH);
+
+  buildPacket(cmdPacket, command_->Address);
+  logCmd(command_->Name.c_str(), cmdPacket);
+
+  int answerLen = sendPacket(answerBuff, cmdPacket);
+  if (answerLen < 0) {
+    ESP_LOGE("Vaillantx6", "sendPacket returned an error: %d", answerLen);
+  } else if (answerLen > 3) {
+    switch (command_->ReturnType) {
+      case Temperature:
+        if (sensor_ != nullptr) {
+          float temp = VaillantParseTemperature(answerBuff, 2);
+          sensor_->publish_state(temp);
+        }
+        break;
+      case Bool:
+        if (binary_sensor_ != nullptr) {
+          int b = VaillantParseBool(answerBuff, 2);
+          if (b >= 0) {
+            binary_sensor_->publish_state(b);
+          }
+        }
+        break;
+      case Minutes:
+        if (sensor_ != nullptr) {
+          sensor_->publish_state(answerBuff[2]);
+        }
+        break;
+      default:
+        break;
+    }
+  }
+
+  free(cmdPacket);
+  free(answerBuff);
+}
+
+}
+
+void EmptyUARTSensor::loop() {
+
+}
+
+void EmptyUARTSensor::dump_config(){
+    ESP_LOGCONFIG(TAG, "Empty UART sensor");
+}
+
+}  // namespace empty_UART_sensor
+}  // namespace esphome
+
 
 void logCmd(const char *tag, byte *cmd) {
   ESP_LOGD("vaillantx6", "%s: 0x%.2x 0x%.2x 0x%.2x 0x%.2x 0x%.2x 0x%.2x 0x%.2x", tag, cmd[0], cmd[1], cmd[2], cmd[3], cmd[4], cmd[5], cmd[6]);
@@ -135,44 +200,4 @@ int Vaillantx6Sensor::sendPacket(byte *answerBuff, byte *packet) {
     return -2;
   }
   return answerLen;
-}
-
-void Vaillantx6Sensor::update() {
-  byte *cmdPacket = (byte *)malloc(sizeof(byte) * CMD_LENGTH);
-  byte *answerBuff = (byte *)malloc(sizeof(byte) * ANSWER_LENGTH);
-
-  buildPacket(cmdPacket, command_->Address);
-  logCmd(command_->Name.c_str(), cmdPacket);
-
-  int answerLen = sendPacket(answerBuff, cmdPacket);
-  if (answerLen < 0) {
-    ESP_LOGE("Vaillantx6", "sendPacket returned an error: %d", answerLen);
-  } else if (answerLen > 3) {
-    switch (command_->ReturnType) {
-      case Temperature:
-        if (sensor_ != nullptr) {
-          float temp = VaillantParseTemperature(answerBuff, 2);
-          sensor_->publish_state(temp);
-        }
-        break;
-      case Bool:
-        if (binary_sensor_ != nullptr) {
-          int b = VaillantParseBool(answerBuff, 2);
-          if (b >= 0) {
-            binary_sensor_->publish_state(b);
-          }
-        }
-        break;
-      case Minutes:
-        if (sensor_ != nullptr) {
-          sensor_->publish_state(answerBuff[2]);
-        }
-        break;
-      default:
-        break;
-    }
-  }
-
-  free(cmdPacket);
-  free(answerBuff);
 }
